@@ -109,4 +109,9 @@
 ; (+ 3 6)
 ; and so on until (+ 0 9)
 
-; The first procedure is recursive because it 
+; The first procedure is recursive because it increments the result of its
+; recursive call. The second procedure is iterative because it simply
+; returns the result of calling itself, allowing the Scheme interpreter
+; to optimize the procedure into an iterative process.
+
+; 1.10
