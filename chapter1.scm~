@@ -79,11 +79,9 @@
 
 (sqrt-new 16) ; 4.000000000000051
 (sqrt-new .16) ; 0.4000000000013423
-(sqrt-new 161616161616) ; 402015.12610348384
+(sqrt 161616161616) ; 402015.12610348384
 
 ; The answers are marginally more precise than the previous version 🤔
-; 161616161616 gets an identical result though. It seems to have
-; only improved for small numbers.
 
 ; 1.8
 (define (cbrt-improve guess x)
