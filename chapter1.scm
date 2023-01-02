@@ -115,3 +115,119 @@
 ; to optimize the procedure into an iterative process.
 
 ; 1.10
+
+; (I assume I'm meant to calculate these by hand instead of
+; just running them in the interpreter.)
+
+; (A 1 10)
+; (A 0 (A 1 9))
+; (A 0 (A 0 (A 1 8)))
+; (A 0 (A 0 (A 0 (A 1 7))))
+; ...
+; (A 0 (A 0 (A 0... A 1 1)))
+; The (* 2 y) when y = 2 cascades upward nine times, resulting in 1024
+
+; (A 2 4)
+; (A 1 (A 2 3))
+; (A 1 (A 1 (A 2 2))
+; (A 1 (A 1 (A 1 (A 2 1))))
+; (A 1 (A 1 (A 1 2))
+; (A 1 (A 1 (A 0 (A 1 1)))
+; ...
+; (A 1 (A 1 4))
+; (A 1 (A 0 (A 1 3)))
+; (A 1 (A 0 (A 0 (A 1 3))))
+; (A 1 (A 0 (A 0 (A 1 (A 1 2))))
+; ...
+; (A 1 16)
+; Based on the method above, the solution is 2^16 = 65536
+
+; (A 3 3)
+; (A 2 (A 3 2))
+; (A 2 (A 2 (A 3 1)))
+; (A 2 (A 2 2))
+; (A 2 (A 1 (A 2 1)))
+; (A 2 (A 1 2))
+; (A 2 (A 0 (A 1 1)))
+; (A 2 (A 0 2))
+; (A 2 4)
+; Hey this looks familiar
+; ...
+; 65536
+
+; 1.11
+
+; Recursive
+(define (eleven-rec n)
+  (if (< n 3)
+      n
+      (+ (eleven-rec (- n 1))
+         (* 2 (eleven-rec (- n 2)))
+         (* 3 (eleven-rec (- n 3))))))
+
+; Iterative
+(define (eleven-iter n a b c new-n)
+  (if (= n new-n)
+      a
+      (eleven-iter n (+ a (* 2 b) (* 3 c)) a b (+ 1 new-n))))
+
+(define (eleven n)
+  (if (< n 3)
+      n
+      (eleven-iter n 2 1 0 2)))
+
+(= (eleven-rec 5) 25)
+(= (eleven 5) 25)
+
+; 1.12
+(define (pascal row-number col-number)
+  (if (or (= col-number 1) (= col-number row-number))
+      1
+      (+ (pascal (- row-number 1) (- col-number 1))
+         (pascal (- row-number 1) col-number))))
+
+(= (pascal 10 7) 84)
+(= (pascal 1 1) 1)
+
+; 1.13
+; What?
+
+; 1.14
+; I don't know what "the tree" is - maybe a special notation
+; that would have been explained in the accompanying class?
+
+; The process loops x - 1 times for each kind of coin added,
+; where x is the kinds of coins. This makes it O^n in modern
+; O notation, no idea in the weird notation this book uses.
+
+; Given that the procedure's `cond` statement covers 1 through 5,
+; the worst-case scenario is O(n^5) which is pretty slow.
+
+; 1.15
+; a.
+; (sine 12.15)
+; (p (sine 4.05))
+; (p (p (sine 1.35)))
+; (p (p (p (sine 0.45))))
+; (p (p (p (p (sine 0.15)))))
+; (p (p (p (p (p (sine 0.05))))))
+
+; 6 times
+
+; b.
+; The number of times `a` must be divided by 3
+; to hit < 0.1, so uhhhhhh `(a/3n) < 0.1`.
+
+; 1.16
+
+(define (iter-expt b n)
+  (define (compute-exp b1 n1 a)
+    (cond ((= n1 0) a)
+          ((even? n1) (compute-exp (square b1) (/ n1 2) a))
+          (else (compute-exp b1 (- n1 1) (* a b1)))))
+  (compute-exp b n 1))
+
+(= (iter-expt 5 6) 15625)
+(= (iter-expt 5 12) 244140625)
+(= (iter-expt 11 6) 1771561)
+
