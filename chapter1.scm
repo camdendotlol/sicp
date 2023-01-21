@@ -231,3 +231,233 @@
 (= (iter-expt 5 12) 244140625)
 (= (iter-expt 11 6) 1771561)
 
+; 1.17
+
+(define (double x) (* x 2))
+(define (halve x) (/ x 2))
+
+(define (new-multi x y)
+  (cond ((= x 1) y)
+        ((even? x) (new-multi (halve x) (double y)))
+        (else (+ y (new-multi (- x 1) y)))))
+
+(= (new-multi 4 5) 20)
+(= (new-multi 3 5) 15)
+(= (new-multi 28374 78723) 2233686402)
+
+; 1.18
+
+(define (iter-multi x y)
+  (define (compute-multi x1 y1 total)
+    (cond ((= x1 0) total)
+          ((even? x1) (compute-multi (halve x1) (double y1) total))
+          (else (compute-multi (halve (- x1 1)) (double y1) (+ total y1)))))
+  (compute-multi x y 0))
+
+(= (iter-multi 10 30) 300)
+(= (iter-multi 3 5) 15)
+(= (iter-multi 37 20) 740)
+
+; 1.19
+
+(define (fib-iter a b p q count)
+  (cond ((= count 0) b)
+        ((even? count)
+         (fib-iter a
+                   b
+                   (+ (* p p) (* q q))
+                   (+ (* 2 p q) (* q q)) ;🤨
+                   (/ count 2)))
+        (else (fib-iter (+ (* b q) (* a q) (* a p))
+                        (+ (* b p) (* a q))
+                        p
+                        q
+                        (- count 1)))))
+
+(define (fib n)
+  (fib-iter 1 0 0 1 n))
+
+(= (fib 10) 55)
+(= (fib 20) 6765)
+
+; 1.20
+
+(define (gcd a b)
+  (if (= b 0)
+      a
+      (gcd b (remainder a b))))
+
+; Applicative order
+
+; where G = gcd
+; (G 206 40)
+; (G 40 6)
+; (G 6 4)
+; (G 4 2)
+; (G 2 0)
+; 2
+; remainder called 4 times
+
+; Normal order
+
+; (G 206 40)
+; (G ~(206 (G 40 6))) remainder called!
+; (G ~(206 (G ~(40 (G ...)
+; basically it calls remainder a lot of times because
+; it needs to expand every possibility.
+; Sorry Abelson et al., I'm not gonna write it all out!
+; Applicative order > normal order, I get it!
+
+; 1.21
+(define (divides? a b)
+  (= (remainder b a) 0))
+
+(define (find-divisor n test-divisor)
+  (cond ((> (square test-divisor) n) n)
+        ((divides? test-divisor n) test-divisor)
+        (else (find-divisor n (+ test-divisor 1)))))
+
+(define (smallest-divisor n)
+  (find-divisor n 2))
+
+(define (prime? n)
+  (= n (smallest-divisor n)))
+
+; I assume I'm meant to write them out?
+
+; (smallest-divisor 19999)
+; (find-divisor 19999 2)
+; (find-divisor 19999 3)
+; (find-divisor 19999 4)
+; ...
+; 7
+
+; (smallest-divisor 1999)
+; (find-divisor 1999 2)
+; ...
+; this number is prime so... 1999
+
+; (smallest-divisor 199)
+; same for this one. 199.
+
+; 1.22
+
+(runtime) ; wow!
+
+(define (fast-expt b n )
+  (cond ((= n 0) 1)
+        ((even? n) (square (fast-expt b (/ n 2))))
+        (else (* b (fast-expt b (- n 1))))))
+
+(define (expmod base exp m)
+  (cond ((= exp 0) 1)
+        ((even? exp)
+         (remainder (square (expmod base (/ exp 2) m))
+                    m))
+        (else
+         (remainder (* base (expmod base (- exp 1) m))
+                    m))))
+
+; APH's solution:
+; (define (expmod base exp m)
+;   (remainder (fast-expt base exp) m))
+
+(define (fermat-test n)
+  (define (try-it a)
+    (= (expmod a n n) a))
+  (try-it (+ 1 (random (- n 1)))))
+
+(define (fast-prime? n times)
+  (cond ((= times 0) true)
+        ((fermat-test n) (fast-prime? n (- times 1)))
+        (else false)))
+
+(define (timed-prime-test n)
+  (newline)
+  (display n)
+  (start-prime-test n (runtime)))
+
+(define (start-prime-test n start-time)
+  (if (fast-prime? n 0)
+      (report-prime (- (runtime) start-time))))
+
+(define (report-prime elapsed-time)
+  (display " *** ")
+  (display elapsed-time))
+
+; only accepts odd numbers
+; I could add handling for even numbers but the book
+; said "checks [...] odd numbers" so I won't bother
+(define (search-for-primes first last)
+  (if (even? first)
+      (search-for-primes (+ first 1) last)
+  (cond ((>= first last)
+      (display "\nmission accomplished!"))
+      (else (timed-prime-test first)
+            (search-for-primes (+ first 2) last)))))
+
+; three smallest primes larger than... (including typical compute times)
+; (I think ms = microseconds)
+; 1000: 1009, 1013, 1019 (1-2ms)
+; 10,000: 10007, 10009, 10037 (4-5ms)
+; 100,000: 100003, 100019, 100043 (23-38ms)
+; 1,000,000: 1000003, 1000033, 1000037 (31-32ms)
+
+; (sqrt 10 is ~3.16)
+; The difference between 1000 and 10,000 follows that approximately.
+; At higher levels, the jump isn't quite as much as O(sqrt(10).
+; I wonder if there's a modern CPU optimization that didn't exist
+; when the book came out, or if there's a reporting accuracy issue
+; in DrRacket's interpreter.
+
+
+; 1.23
+
+(define (next x)
+  (if (= x 2)
+      3
+      (+ x 2)))
+
+(define (new-find-divisor n test-divisor)
+  (cond ((> (square test-divisor) n) n)
+        ((divides? test-divisor n) test-divisor)
+        (else (new-find-divisor n (next test-divisor)))))
+
+; This seems to take 2x longer instead of 0.5x as the book says?
+; ...
+; Actually, running it repeatedly with and without `next`, it
+; varies a lot. Both procedures seem to run slower the first few times
+; and then speed up a lot. After they've been sped up, the `next`
+; version does seem to be a little under twice as fast, but not
+; when comparing their first few runs. I think there is a caching
+; thing going on in the CPU that saves time for repetitive tasks.
+
+; 1.24
+
+; Woah! All calculation times dropped to the 0-1 range.
+; This even includes gigantic numbers like 1000000000000000000000000.
+; Unfortunately this makes it difficult to check the
+; exact calculation the book is asking for. The numbers are too low
+; for me to see a difference between number sizes. But it is certainly
+; a lot faster.
+
+; 1.25
+
+; As with the previous excercise, the runtime numbers are below 0
+; most of the time so I can't see any slowdown (as I expect I'm
+; supposed to see).
+
+; Examining the code, the only difference I see is that fast-expt
+; will compute a large number at the beginning. Normal, sane
+; languages of today don't have a problem with that but on the
+; 80s clunkers Abelson et al. must have been using, it would have
+; been a big deal.
+
+; However, to avoid so-called "big ints", it would be best to
+; avoid APH's solution.
+
+; 1.26
+
+; The result of `(expmod base (/ exp 2) m)` will be calculated once
+; and send to the square procedure. In LR's code, he runs that
+; calculation twice in order to multiply it against itself.
