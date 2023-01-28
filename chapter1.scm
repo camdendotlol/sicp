@@ -461,3 +461,62 @@
 ; The result of `(expmod base (/ exp 2) m)` will be calculated once
 ; and send to the square procedure. In LR's code, he runs that
 ; calculation twice in order to multiply it against itself.
+
+; 1.27
+
+; I have no idea what "congruent modulo" etc means and Google didn't
+; help so I had to look at an answer key :(
+
+(define (carmichael-legit? n)
+  (define (is-congruent? n a)
+    (cond ((= a 1) #t)
+          ((not (= (expmod a n n) a)) #f)
+          (else (is-congruent? n (- a 1)))))
+  (is-congruent? n (- n 1)))
+
+(carmichael-legit? 561)
+(carmichael-legit? 1105)
+(carmichael-legit? 1729)
+(carmichael-legit? 2465)
+(carmichael-legit? 2821)
+(carmichael-legit? 6601)
+(not (carmichael-legit? 27))
+
+; 1.28
+
+; Really getting tired of the math stuff.
+; I looked ahead and it seems like chapters 2+ are more practical.
+; If not, I may switch to another book 🥴
+
+(define (mr-check n a)
+  (if (and (not (or (= n 1)
+                    (= n (- a 1))))
+           (= (remainder (square n) a) 1))
+      0
+      (remainder (square n) a)))
+
+(define (mr-expmod base exp m)
+  (cond ((= exp 0) 1)
+        ((even? exp)
+         (mr-check (mr-expmod base (/ exp 2) m) m))
+        (else
+         (remainder (* base (mr-expmod base (- exp 1) m))
+                    m))))
+
+(define (mr-test n)
+  (define (mr-test-test n1)
+    (= (mr-expmod n1 (- n 1) n) 1))
+  (mr-test-test (+ 1 (random (- n 1)))))
+
+(define (is-mr-prime? n times)
+  (cond ((= times 0) #t)
+        ((mr-test n)
+         (is-mr-prime? n (- times 1)))
+        (else #f)))
+
+(not (is-mr-prime? 561 100))
+(not (is-mr-prime? 1105 100))
+(not (is-mr-prime? 1729 100))
+(not (is-mr-prime? 27 100))
+(is-mr-prime? 167 100)
+(is-mr-prime? 229 100)
